@@ -3,6 +3,8 @@ const webpack = require('webpack');
 const { version } = require('./package.json');
 
 module.exports = defineConfig({
+  publicPath: '/peario/',
+
   configureWebpack: {
     resolve: {
       fallback: {
@@ -23,6 +25,7 @@ module.exports = defineConfig({
       })
     ]
   },
+
   css: {
     loaderOptions: {
       sass: {
@@ -32,6 +35,7 @@ module.exports = defineConfig({
       }
     }
   },
+
   chainWebpack: config => {
     config.module
       .rule('vue')
@@ -43,6 +47,7 @@ module.exports = defineConfig({
         }
       }));
   },
+
   transpileDependencies: ['vue-meta'],
   productionSourceMap: false
 });
