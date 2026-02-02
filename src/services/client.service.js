@@ -7,19 +7,21 @@ const ClientService = {
     events: new EventEmitter(),
 
 connect(url) {
-    if (!url) return; // WS yoksa sessizce geç
+  if (!url) {
+    console.warn('WS disabled: no URL');
+    return;
+  }
 
-    try {
-        this.socket = new WebSocket(url);
-
-        this.socket.onopen = this._handleOpen.bind(this);
-        this.socket.onclose = () => this.events.emit('closed');
-        this.socket.onmessage = this._handleMessage.bind(this);
-
-    } catch (e) {
-        console.warn('WS disabled:', e);
-    }
+  try {
+    this.socket = new WebSocket(url);
+    this.socket.onopen = this._handleOpen.bind(this);
+    this.socket.onclose = () => this.events.emit('closed');
+    this.socket.onmessage = this._handleMessage.bind(this);
+  } catch (e) {
+    console.warn('WS disabled:', e);
+  }
 },
+
 
 
     _handleOpen() {
