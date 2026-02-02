@@ -4,14 +4,23 @@ const ClientService = {
 
     socket: null,
     heartbeat: null,
-    events: new EventEmitter,
+    events: new EventEmitter(),
 
-    connect(url) {
+connect(url) {
+    if (!url) return; // WS yoksa sessizce geç
+
+    try {
         this.socket = new WebSocket(url);
+
         this.socket.onopen = this._handleOpen.bind(this);
-        this.socket.onclose = this.events.emit('closed');
+        this.socket.onclose = () => this.events.emit('closed');
         this.socket.onmessage = this._handleMessage.bind(this);
-    },
+
+    } catch (e) {
+        console.warn('WS disabled:', e);
+    }
+},
+
 
     _handleOpen() {
         this.events.emit('opened');
@@ -23,9 +32,10 @@ const ClientService = {
         this.events.emit(type, payload);
     },
 
-    send(type, payload) {
-        this.socket.send(JSON.stringify({ type, payload }));
-    },
+send(type, payload) {
+    if (!this.socket || this.socket.readyState !== 1) return;
+    this.socket.send(JSON.stringify({ type, payload }));
+},
 
     parseEvents(msg) {
         const { data } = msg;
