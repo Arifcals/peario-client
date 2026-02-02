@@ -3,10 +3,6 @@ const webpack = require('webpack');
 const { version } = require('./package.json');
 
 module.exports = defineConfig({
-  publicPath: process.env.NODE_ENV === 'production'
-    ? '/peario/'
-    : '/',
-
   configureWebpack: {
     resolve: {
       fallback: {
@@ -25,14 +21,8 @@ module.exports = defineConfig({
       new webpack.DefinePlugin({
         'process.env.PACKAGE_VERSION': JSON.stringify(version),
       })
-    ],
-    devServer: {
-      client: {
-        overlay: false,
-      },
-    },
+    ]
   },
-
   css: {
     loaderOptions: {
       sass: {
@@ -42,7 +32,6 @@ module.exports = defineConfig({
       }
     }
   },
-
   chainWebpack: config => {
     config.module
       .rule('vue')
@@ -50,14 +39,10 @@ module.exports = defineConfig({
       .tap(options => ({
         ...options,
         compilerOptions: {
-          isCustomElement: (tag) => tag === 'ion-icon'
+          isCustomElement: tag => tag === 'ion-icon'
         }
       }));
   },
-
-  transpileDependencies: [
-    'vue-meta',
-  ],
-
-  productionSourceMap: false,
+  transpileDependencies: ['vue-meta'],
+  productionSourceMap: false
 });
