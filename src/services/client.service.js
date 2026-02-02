@@ -7,11 +7,7 @@ const ClientService = {
     events: new EventEmitter(),
 
 connect(url) {
-  if (!url) {
-    console.warn('WS disabled: no URL');
-    return;
-  }
-
+  if (!url) return; // WS yoksa sessizce geç
   try {
     this.socket = new WebSocket(url);
     this.socket.onopen = this._handleOpen.bind(this);
