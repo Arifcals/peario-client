@@ -7,17 +7,20 @@
             </div>
 
             <div class="filters-container">
-                <TextInput v-model="manifestUrl" :placeholder="$t('components.addons.manifestTextInput')" @input="addFromURL()"></TextInput>
-                <Segments :segments="types" v-model="type">
+<TextInput
+  v-model="manifestUrl"
+  :placeholder="$t('components.addons.manifestTextInput')"
+  @keyup.enter="addFromURL"
+/>                <Segments :segments="types" v-model="type">
                     <template #segment="{ segment }">
                         {{ $t(`components.addons.types.${segment}`) }}
                     </template>
                 </Segments>
-            </div>
+ </div>
 
             <ul>
-                <li class="addon" :class="{ active: isInstalled(addon) }" v-for="addon in collection[type]" :key="addon.transportUrl" @click="toggleAddon(addon)">
-                    <div class="info">
+                <li class="addon" :class="{ active: isInstalled(addon) }" v-for="addon in collection[type]" :key="addon.transportUrl">
+                    <div class="info" @click="toggleAddon(addon)">
                         <div class="icon">
                             <img :src="addon.manifest.icon || addon.manifest.logo" alt="" v-if="addon.manifest.icon || addon.manifest.logo">
                             <ion-icon name="cube-outline" v-else></ion-icon>
@@ -31,13 +34,17 @@
                             </div>
                         </div>
                     </div>
-                    <div class="switch">
-                        <ion-icon name="toggle-outline" class="off flip" v-show="!isInstalled(addon)"></ion-icon>
-                        <ion-icon name="toggle" class="on" v-show="isInstalled(addon)"></ion-icon>
+                    <div class="actions">
+                        <div class="copy-button" @click.stop="copyAddonConfiguration(addon)" title="Copy configuration">
+                            <ion-icon name="copy-outline"></ion-icon>
+                        </div>
+                        <div class="switch" @click="toggleAddon(addon)">
+                            <ion-icon name="toggle-outline" class="off flip" v-show="!isInstalled(addon)"></ion-icon>
+                            <ion-icon name="toggle" class="on" v-show="isInstalled(addon)"></ion-icon>
+                        </div>
                     </div>
                 </li>
             </ul>
-
             <div class="community-list">
                 <AButton clear class="link" icon="open-outline" @click="openList">
                     {{ $t(`components.addons.communityList`) }}
@@ -91,19 +98,50 @@ export default {
             if (this.isInstalled(addon)) this.$store.dispatch('uninstallAddon', addon);
             else this.$store.dispatch('installAddon', addon);
         },
-        async addFromURL() {
-            const addedAddon = await this.$store.dispatch('addUserAddon', this.manifestUrl);
-            if (addedAddon) {
-                this.$store.dispatch('loadAddons', this.manifestUrl);
-                this.manifestUrl = '';
-                this.$toast.success(this.$t('toasts.userAddonSuccess', [addedAddon.manifest.name]));
-            }
-        },
+async addFromURL() {
+    if (!this.manifestUrl) return;
+
+    const addedAddon = await this.$store.dispatch(
+        'addUserAddon',
+        this.manifestUrl
+    );
+
+    if (addedAddon) {
+        this.$store.dispatch('loadAddons', this.manifestUrl);
+        this.manifestUrl = '';
+        this.$toast.success(
+            this.$t('toasts.userAddonSuccess', [addedAddon.manifest.name])
+        );
+    }
+},
         openList() {
             window.open(ADDON_COMMUNITY_LIST, '_blank');
+        },
+        async copyAddonConfiguration(addon) {
+            try {
+                await navigator.clipboard.writeText(addon.transportUrl);
+                this.$toast.success(this.$t('toasts.clipboard'));
+            } catch (error) {
+                console.error('Failed to copy configuration:', error);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = addon.transportUrl;
+                textArea.style.position = 'fixed';
+                textArea.style.opacity = '0';
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    this.$toast.success(this.$t('toasts.clipboard'));
+                } catch (err) {
+                    console.error('Fallback copy failed:', err);
+                }
+                document.body.removeChild(textArea);
+            }
         }
     }
 };
+        
 </script>
 
 <style lang="scss" scoped>
@@ -154,7 +192,7 @@ export default {
         cursor: pointer;
         transition: all 0.1s ease-in-out;
 
-        &:ho1er {
+        &:hover {
             transform: scale(1.1);
         }
     }
@@ -180,16 +218,16 @@ export default {
         overflow-y: auto;
         padding: 0 1.5em;
 
-        .addon {
+  .addon {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             color: $text-color;
             user-select: none;
-            cursor: pointer;
             transition: all 0.1s ease-in-out;
-
             &.active {
-                opacity: 1;
+                
+        opacity: 1;
             }
 
             &:not(.active):hover {
@@ -202,7 +240,7 @@ export default {
                 align-items: center;
                 gap: 15px;
                 overflow: hidden;
-
+                cursor: pointer;
                 .icon {
                     flex: 0 0 auto;
                     display: grid;
@@ -251,23 +289,48 @@ export default {
                 }
             }
 
-            .switch {
+            .actions {
                 flex: 0 0 auto;
                 display: flex;
                 align-items: center;
-                font-size: 2em;
-
-                ion-icon {
-                    &.on {
-                        color: $accent-color;
+                gap: 10px;
+                .copy-button {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 2em;
+                    height: 2em;
+                    cursor: pointer;
+                    border-radius: 8px;
+                    transition: all 0.1s ease-in-out;
+                    opacity: 0.6;
+                    ion-icon {
+                        font-size: 1.5em;
                     }
-
-                    &.off {
-                        opacity: 0.5;
+                    &:hover {
+                        opacity: 1;
+                        background-color: rgba(white, 0.1);
+                    }
+                    &:active {
+                        transform: scale(0.95);
                     }
                 }
-            }
-        }
+                .switch {
+                    display: flex;
+                    align-items: center;
+                    font-size: 2em;
+                    cursor: pointer;
+                    ion-icon {
+                        &.on {
+                            color: $accent-color;
+                        }
+                        &.off {
+                            opacity: 0.5;
+                        }
+                    }
+                }
+            
+            }        }
     }
 
     .community-list {

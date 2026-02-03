@@ -41,9 +41,10 @@
             },
             "button": "Done"
         },
-        "addons": {
+          "addons": {
             "manifestTextInput": "Paste addon install link",
             "communityList": "Browse more addons",
+            "copyConfiguration": "Copy Configuration",
             "types": {
                 "streams": "Streams",
                 "subtitles": "Subtitles"
