@@ -10,7 +10,7 @@ import locales from './common/locales';
 import toTimer from './directives/toTimer';
 
 // 👉 EKLENECEK
-import ClientService from './services/ClientService';
+import ClientService from "./services/client.service.js"
 
 const i18n = createI18n({
   legacy: false,

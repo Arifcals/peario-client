@@ -54,7 +54,7 @@ import Error from "@/components/Error.vue";
 import Button from "@/components/ui/Button.vue";
 import Player from "@/components/player/Player.vue";
 import Chat from "@/components/Chat.vue";
-import UsersList from 'peario-client\src\views\Room\UsersList\UsersList.vue';
+import UsersList from '@/views/Room/UsersList/UsersList.vue';
 import StremioService from "@/services/stremio.service";
 import HlsService from "@/services/hls.service";
 import ClientService from "@/services/client.service";
