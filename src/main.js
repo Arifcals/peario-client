@@ -9,11 +9,17 @@ import store from './store';
 import locales from './common/locales';
 import toTimer from './directives/toTimer';
 
+// 👉 EKLENECEK
+import ClientService from './services/ClientService';
+
 const i18n = createI18n({
   legacy: false,
   locale: 'en',
   messages: locales
 });
+
+// 👉 WS BAĞLANTISI BURADA BAŞLAR
+ClientService.connect(import.meta.env.VUE_APP_WS_SERVER);
 
 createApp(App)
   .use(i18n)
