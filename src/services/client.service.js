@@ -1,17 +1,18 @@
-import { EventEmitter } from 'events';
+import mitt from 'mitt';
 
 const ClientService = {
 
     socket: null,
     heartbeat: null,
-    events: new EventEmitter(),
+    events: mitt(),
+
 
 connect(url) {
   if (!url) return; // WS yoksa sessizce geç
   try {
     this.socket = new WebSocket(url);
     this.socket.onopen = this._handleOpen.bind(this);
-    this.socket.onclose = () => this.events.emit('closed');
+    this.socket.onclose = () => this.events.on('closed', fn);
     this.socket.onmessage = this._handleMessage.bind(this);
   } catch (e) {
     console.warn('WS disabled:', e);
