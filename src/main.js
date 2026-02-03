@@ -19,7 +19,7 @@ const i18n = createI18n({
 });
 
 // 👉 WS BAĞLANTISI BURADA BAŞLAR
-ClientService.connect(import.meta.env.VUE_APP_WS_SERVER);
+ClientService.connect(process.env.VUE_APP_WS_SERVER);
 
 createApp(App)
   .use(i18n)
