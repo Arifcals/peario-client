@@ -12,7 +12,7 @@ connect(url) {
   try {
     this.socket = new WebSocket(url);
     this.socket.onopen = this._handleOpen.bind(this);
-    this.socket.onclose = () => this.events.on('closed', fn);
+    this.socket.onclose = () => this.events.on('closed');
     this.socket.onmessage = this._handleMessage.bind(this);
   } catch (e) {
     console.warn('WS disabled:', e);
