@@ -1,59 +1,73 @@
-import ClientService from '@/services/client.service';
-import { WS_SERVER } from '@/common/config';
+import axios from "axios";
+import { parseSync } from 'subtitle';
+import { HTTP_SERVER } from "@/common/config";
 
-export default {
-    namespaced: true,
-    state: {
-        connected: false,
-        ready: false,
-        error: null,
-        user: null,
-        room: null,
-        messages: []
-    },
-    mutations: {
-        updateStatus(state, value) {
-            state.connected = value;
-        },
-        updateReady(state, value) {
-            state.ready = value;
-        },
-        updateError(state, value) {
-            state.error = value;
-        },
-        updateUser(state, value) {
-            state.user = value;
-        },
-        updateRoom(state, value) {
-            state.room = value;
-        },
-        updateMessages(state, value) {
-            state.messages = [
-                ...state.messages,
-                value
-            ];
-        },
-        clearMessages(state) {
-            state.messages = [];
-        }
-    },
-    actions: {
-        start({ commit }) {
-            ClientService.connect(WS_SERVER);
-            ClientService.events.on('opened', () => commit('updateStatus', true));
-            ClientService.events.on('closed', () => commit('updateStatus', false));
-            ClientService.events.on('ready', ({ user }) => {
-                commit('updateReady', true);
-                commit('updateUser', user);
-            });
-            ClientService.events.on('user', ({ user }) => commit('updateUser', user));
-            ClientService.events.on('error', error => commit('updateError', error));
-            ClientService.events.on('room', room => {
-                commit('updateRoom', room);
-                commit('clearMessages');
-            });
-            ClientService.events.on('sync', room => commit('updateRoom', room));
-            ClientService.events.on('message', message => commit('updateMessages', message));
+function toSubtitlesProxyUrl(url) {
+    if (!url) return url;
+
+    // In development, subtitle downloads from subs5.strem.io are blocked by CORS.
+    // Route them through the Vue devServer proxy (/subs -> https://subs5.strem.io).
+    if (process.env.NODE_ENV === 'development') {
+        try {
+            const u = new URL(url, window.location.origin);
+            if (u.hostname === 'subs5.strem.io') {
+                return `/subs${u.pathname}${u.search}`;
+            }
+        } catch (_) {
+            // ignore
         }
     }
+
+    return url;
+}
+
+const SubtitleService = {
+    
+    subtitles: null,
+
+    getCurrent(seconds) {
+        if (this.subtitles) {
+            const ms = seconds * 1000;
+            const line = this.subtitles.find(({ data }) => ms >= data.start && ms <= data.end);
+            return line ? line.data.text : '';
+        }
+        return null;
+    },
+
+    async set(url) {
+        this.subtitles = null;
+        try {
+            const proxiedUrl = toSubtitlesProxyUrl(url);
+            const { data } = await axios.get(proxiedUrl, { responseType: 'text' });
+            if (!data || (typeof data === 'string' && data.trim().length === 0)) {
+                return Promise.reject(new Error('Empty subtitles response'));
+            }
+
+            this.subtitles = parseSync(data);
+            return Promise.resolve();
+        } catch(err) {
+            // Fall back to server-side proxy to avoid CORS and flaky subtitle hosts.
+            try {
+                const proxyBase = process.env.NODE_ENV === 'development' ? '/peario' : HTTP_SERVER;
+                const proxyUrl = `${proxyBase}/proxy/subtitle?url=${encodeURIComponent(url)}`;
+                const { data } = await axios.get(proxyUrl, { responseType: 'text' });
+                if (!data || (typeof data === 'string' && data.trim().length === 0)) {
+                    return Promise.reject(new Error('Empty subtitles response (proxy)'));
+                }
+                this.subtitles = parseSync(data);
+                return Promise.resolve();
+            } catch (proxyErr) {
+                // eslint-disable-next-line no-console
+                console.warn('Subtitle proxy failed', { url, err, proxyErr });
+                return Promise.reject(proxyErr || err);
+            }
+        }
+    },
+
+    setCustom(data) {
+        this.subtitles = parseSync(data);
+    }
+
 };
+
+export default SubtitleService;

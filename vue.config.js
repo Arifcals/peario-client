@@ -1,6 +1,7 @@
-const { defineConfig } = require('@vue/cli-service');
+   const { defineConfig } = require('@vue/cli-service');
 const webpack = require('webpack');
 const { version } = require('./package.json');
+
 
 module.exports = defineConfig({
   publicPath: process.env.NODE_ENV === 'production'
@@ -30,6 +31,32 @@ module.exports = defineConfig({
     ]
   },
 
+  devServer: {
+    client: {
+      overlay: false,
+    },
+    proxy: {
+      '^/stremio': {
+        target: 'http://localhost:11470',
+        changeOrigin: true,
+        ws: true,
+        pathRewrite: { '^/stremio': '' },
+      },
+      '^/subs': {
+        target: 'https://subs5.strem.io',
+        changeOrigin: true,
+        secure: true,
+        pathRewrite: { '^/subs': '' },
+      },
+      '^/peario': {
+        target: 'http://localhost:8181',
+        changeOrigin: true,
+        ws: false,
+        pathRewrite: { '^/peario': '' },
+      },
+    },
+  },
+
   css: {
     loaderOptions: {
       sass: {
@@ -52,5 +79,5 @@ module.exports = defineConfig({
       }));
   },
 
-  transpileDependencies: ['vue-meta']
+  transpileDependencies: ['vue-meta'],
 });
