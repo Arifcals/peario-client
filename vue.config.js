@@ -3,7 +3,11 @@ const webpack = require('webpack');
 const { version } = require('./package.json');
 
 module.exports = defineConfig({
-  publicPath: '/',
+  publicPath: process.env.NODE_ENV === 'production'
+    ? '/peario/'
+    : '/',
+
+  productionSourceMap: false,
 
   configureWebpack: {
     resolve: {
@@ -48,6 +52,5 @@ module.exports = defineConfig({
       }));
   },
 
-  transpileDependencies: ['vue-meta'],
-  productionSourceMap: false
+  transpileDependencies: ['vue-meta']
 });
